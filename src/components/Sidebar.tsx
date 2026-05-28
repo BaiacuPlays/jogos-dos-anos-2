@@ -58,7 +58,7 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
               Selecting for {selectedYear}
             </span>
           ) : (
-            "Select a year first"
+            "Selecione um ano primeiro"
           )}
         </h2>
         
@@ -66,7 +66,7 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
           <input
             type="text"
             className="w-full bg-zinc-900/50 border border-zinc-800 text-zinc-100 rounded-lg py-2.5 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 placeholder-zinc-500 text-sm transition-all"
-            placeholder="Search for a game..."
+            placeholder="Procure por um jogo..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             disabled={!selectedYear}
@@ -93,7 +93,7 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
              <div className="w-12 h-12 rounded-full border border-zinc-800 flex items-center justify-center bg-zinc-900/50">
                 <Search className="w-5 h-5 text-zinc-600" />
              </div>
-             <p className="text-sm">Click on a year card to start searching for your Game of the Year.</p>
+             <p className="text-sm">Clique em um cartão de ano para pesquisar pelo seu jogo do ano.</p>
            </div>
         ) : loading ? (
           <div className="flex justify-center items-center py-12">
@@ -116,7 +116,7 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center p-3 text-xs text-zinc-600 text-center bg-zinc-800/30">
-                      No Image
+                      Sem imagem
                     </div>
                   )}
                   
@@ -137,7 +137,7 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
             
             {results.length === 0 && query && (
                <div className="col-span-2 text-center text-zinc-500 py-10 text-sm">
-                 No games found. Try a different search term.
+                 Nenhum jogo encontrado. Tente um termo de pesquisa diferente.
                </div>
             )}
           </div>
