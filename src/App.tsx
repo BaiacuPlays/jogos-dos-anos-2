@@ -93,14 +93,14 @@ export default function App() {
             className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white px-4 py-2.5 rounded-lg border border-zinc-800 transition-all shadow-sm font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
           >
             <Download className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            {isExporting ? "Exporting..." : "Export as PNG"}
+            {isExporting ? "Exporting..." : "Exportar como PNG"}
           </button>
         </div>
 
         <div className="max-w-7xl mx-auto" ref={exportRef}>
           <header className="mb-12 text-center space-y-3 pt-8 sm:pt-4">
             <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 font-display tracking-tight">
-              My Game of the Year
+              Meus jogos do anos
             </h1>
             <p className="text-zinc-500 font-medium tracking-wide text-sm font-display uppercase letter-spacing-2">
               {START_YEAR} — {END_YEAR}

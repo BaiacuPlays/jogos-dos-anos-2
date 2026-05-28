@@ -55,7 +55,7 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
           {selectedYear ? (
             <span className="flex items-center gap-2">
               <span className="text-indigo-400">●</span>
-              Selecting for {selectedYear}
+              Selecionando for {selectedYear}
             </span>
           ) : (
             "Selecione um ano primeiro"
