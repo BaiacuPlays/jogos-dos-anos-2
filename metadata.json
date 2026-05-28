@@ -1,0 +1,6 @@
+{
+  "name": "Game of the Year Tracker",
+  "description": "Uma página pessoal para registrar seus jogos favoritos de 1991 a 2026, integrado com a API do IGDB.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
