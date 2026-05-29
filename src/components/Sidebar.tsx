@@ -1,13 +1,14 @@
-import { Search, Loader2 } from "lucide-react";
+import { Search, Loader2, X } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { IGDBGameResult } from "../types";
 
 interface SidebarProps {
   onSelectGame: (game: IGDBGameResult) => void;
   selectedYear: number | null;
+  onClose?: () => void;
 }
 
-export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
+export function Sidebar({ onSelectGame, selectedYear, onClose }: SidebarProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<IGDBGameResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -26,13 +27,13 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
       const data = await response.json();
       
       if (!response.ok) {
-        throw new Error(data.error || "Failed to search games");
+        throw new Error(data.error || "Falha ao pesquisar jogos");
       }
       
       setResults(data);
     } catch (err: any) {
       console.error(err);
-      setError(err.message || "An error occurred");
+      setError(err.message || "Ocorreu um erro");
     } finally {
       setLoading(false);
     }
@@ -49,24 +50,37 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
   };
 
   return (
-    <div className="w-80 bg-zinc-950/80 backdrop-blur-xl border-r border-zinc-900 flex flex-col h-screen overflow-hidden shadow-2xl relative z-50">
+    <div className={`fixed inset-y-0 left-0 z-50 w-full max-w-xs md:max-w-none md:w-80 bg-zinc-950 border-r border-zinc-900 flex flex-col h-screen overflow-hidden shadow-2xl transition-transform duration-300 md:sticky md:top-0 md:translate-x-0 ${
+      selectedYear ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+    }`}>
       <div className="p-6 border-b border-zinc-800/50">
-        <h2 className="text-xl font-bold mb-4 text-zinc-100 flex items-center font-display tracking-tight">
-          {selectedYear ? (
-            <span className="flex items-center gap-2">
-              <span className="text-indigo-400">●</span>
-              Selecionando o ano {selectedYear}
-            </span>
-          ) : (
-            "Selecione um ano primeiro"
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-bold text-zinc-100 flex items-center font-display tracking-tight">
+            {selectedYear ? (
+              <span className="flex items-center gap-2">
+                <span className="text-indigo-400">●</span>
+                Selecionando para {selectedYear}
+              </span>
+            ) : (
+              "Selecione um ano primeiro"
+            )}
+          </h2>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="md:hidden text-zinc-400 hover:text-zinc-100 p-1.5 hover:bg-zinc-900 rounded-lg transition-colors"
+              aria-label="Close sidebar"
+            >
+              <X className="w-5 h-5" />
+            </button>
           )}
-        </h2>
+        </div>
         
         <form onSubmit={handleSearch} className="relative mt-2">
           <input
             type="text"
             className="w-full bg-zinc-900/50 border border-zinc-800 text-zinc-100 rounded-lg py-2.5 pl-4 pr-10 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500/50 placeholder-zinc-500 text-sm transition-all"
-            placeholder="Procure por um jogo..."
+            placeholder="Pesquisar um jogo..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             disabled={!selectedYear}
@@ -93,7 +107,7 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
              <div className="w-12 h-12 rounded-full border border-zinc-800 flex items-center justify-center bg-zinc-900/50">
                 <Search className="w-5 h-5 text-zinc-600" />
              </div>
-             <p className="text-sm">Clique em um cartão de ano para pesquisar pelo seu jogo do ano.</p>
+             <p className="text-sm">Clique em um card de ano para começar a pesquisar o seu Jogo do Ano.</p>
            </div>
         ) : loading ? (
           <div className="flex justify-center items-center py-12">
@@ -137,7 +151,7 @@ export function Sidebar({ onSelectGame, selectedYear }: SidebarProps) {
             
             {results.length === 0 && query && (
                <div className="col-span-2 text-center text-zinc-500 py-10 text-sm">
-                 Nenhum jogo encontrado. Tente um termo de pesquisa diferente.
+                 Nenhum jogo encontrado. Tente um termo diferente.
                </div>
             )}
           </div>
