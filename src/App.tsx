@@ -50,11 +50,11 @@ export default function App() {
 
       const a = document.createElement("a");
       a.href = dataUrl;
-      a.download = "my-goty-list.png";
+      a.download = "minha-lista-goty.png";
       a.click();
     } catch (err) {
       console.error("Failed to export image", err);
-      alert("Failed to export the image. Please try again.");
+      alert("Não foi possível exportar a imagem. Por favor, tente novamente.");
     } finally {
       setIsExporting(false);
     }
@@ -62,7 +62,7 @@ export default function App() {
 
   const handleSelectGame = (game: IGDBGameResult) => {
     if (!selectedYear) {
-      alert("Please select a year first by clicking 'Click to Add' on the grid.");
+      alert("Por favor, selecione um ano primeiro clicando em um card do ano.");
       return;
     }
 
@@ -83,7 +83,19 @@ export default function App() {
 
   return (
     <div className="flex bg-zinc-950 min-h-screen text-zinc-100 font-sans selection:bg-indigo-500/30">
-      <Sidebar onSelectGame={handleSelectGame} selectedYear={selectedYear} />
+      {/* Backdrop for mobile drawer */}
+      {selectedYear !== null && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 md:hidden transition-opacity duration-350"
+          onClick={() => setSelectedYear(null)}
+        />
+      )}
+
+      <Sidebar 
+        onSelectGame={handleSelectGame} 
+        selectedYear={selectedYear} 
+        onClose={() => setSelectedYear(null)} 
+      />
       
       <main className="flex-1 overflow-y-auto p-4 sm:p-8 xl:p-12 relative custom-scrollbar">
         <div className="absolute top-4 right-4 sm:top-8 sm:right-8 z-50">
@@ -93,14 +105,14 @@ export default function App() {
             className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 hover:text-white px-4 py-2.5 rounded-lg border border-zinc-800 transition-all shadow-sm font-medium text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
           >
             <Download className="w-4 h-4 group-hover:scale-110 transition-transform" />
-            {isExporting ? "Exporting..." : "Exportar como PNG"}
+            {isExporting ? "Exportando..." : "Exportar como PNG"}
           </button>
         </div>
 
         <div className="max-w-7xl mx-auto" ref={exportRef}>
           <header className="mb-12 text-center space-y-3 pt-8 sm:pt-4">
             <h1 className="text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-zinc-100 via-zinc-300 to-zinc-500 font-display tracking-tight">
-              Meus jogos do anos
+              Meu Jogo do Ano
             </h1>
             <p className="text-zinc-500 font-medium tracking-wide text-sm font-display uppercase letter-spacing-2">
               {START_YEAR} — {END_YEAR}
@@ -148,7 +160,7 @@ export default function App() {
                             +
                           </div>
                           <span className={`text-xs font-medium ${isSelected ? "text-indigo-400" : "text-zinc-500"}`}>
-                            {isSelected ? "Select..." : "Add"}
+                            {isSelected ? "Selecionar..." : "Adicionar"}
                           </span>
                         </div>
                       ) : !entry.coverId && entry.gameName ? (
