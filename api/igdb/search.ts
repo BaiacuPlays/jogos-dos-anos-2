@@ -80,14 +80,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     let conditions = ["cover != null"];
     
     if (isPokemonMode) {
-      conditions.push("(name ~ *\"pokemon\"* | name ~ *\"pokémon\"*)");
+      conditions.push("(name ~ *\"pokemon\"* | name ~ *\"pokémon\"* | name ~ *\"pokepark\"* | name ~ *\"poképark\"* | name ~ *\"pokken\"* | name ~ *\"pokkén\"* | name ~ *\"pikachu\"*)");
     } else if (searchKeyword) {
       const keywords = String(searchKeyword).split(",").map((k: string) => k.trim()).filter(Boolean);
       if (keywords.length > 0) {
         const subConds = keywords.map((kw: string) => {
           const clean = kw.replace(/"/g, "");
           if (clean.toLowerCase() === "pokemon" || clean.toLowerCase() === "pokémon") {
-            return "(name ~ *\"pokemon\"* | name ~ *\"pokémon\"*)";
+            return "(name ~ *\"pokemon\"* | name ~ *\"pokémon\"* | name ~ *\"pokepark\"* | name ~ *\"poképark\"* | name ~ *\"pokken\"* | name ~ *\"pokkén\"* | name ~ *\"pikachu\"*)";
           } else {
             return `name ~ *"${clean}"*`;
           }
