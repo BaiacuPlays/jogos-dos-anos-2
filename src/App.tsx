@@ -211,8 +211,12 @@ export default function App() {
           background: "#09090b",
         },
         filter: (node) => {
-          // Exclude the switchers so they don't show up in the postcard image
-          return node.id !== "tabs-switcher" && !node.classList.contains("non-exportable");
+          // Ensure node has classList to avoid Error on text, comment or pseudo nodes
+          const el = node as HTMLElement;
+          if (el && el.classList) {
+            return el.id !== "tabs-switcher" && !el.classList.contains("non-exportable");
+          }
+          return true;
         }
       });
 
@@ -463,7 +467,6 @@ export default function App() {
 
     // Reset fields & close
     setNewCardLabel("");
-    setNewCardSearchType("none");
     setNewCardKeyword("");
     setNewCardYear("");
     setIsAddCardModalOpen(false);
@@ -472,19 +475,8 @@ export default function App() {
   const handleOpenRenameCardModal = (category: ListCategory) => {
     setRenamingCategoryId(category.id);
     setRenameCardLabel(category.label);
-    if (category.searchKeyword) {
-      setRenameCardSearchType("keyword");
-      setRenameCardKeyword(String(category.searchKeyword));
-      setRenameCardYear("");
-    } else if (category.searchYear) {
-      setRenameCardSearchType("year");
-      setRenameCardYear(String(category.searchYear));
-      setRenameCardKeyword("");
-    } else {
-      setRenameCardSearchType("none");
-      setRenameCardKeyword("");
-      setRenameCardYear("");
-    }
+    setRenameCardKeyword(category.searchKeyword ? String(category.searchKeyword) : "");
+    setRenameCardYear(category.searchYear ? String(category.searchYear) : "");
     setIsRenameCardModalOpen(true);
   };
 
@@ -503,21 +495,12 @@ export default function App() {
           ...l,
           categories: l.categories.map(c => {
             if (c.id === renamingCategoryId) {
-              const updatedCat: ListCategory = {
+              return {
                 ...c,
-                label: renameCardLabel.trim()
+                label: renameCardLabel.trim(),
+                searchKeyword: renameCardKeyword.trim() ? renameCardKeyword.trim() : null,
+                searchYear: renameCardYear.trim() ? renameCardYear.trim() : null
               };
-              if (renameCardSearchType === "keyword") {
-                updatedCat.searchKeyword = renameCardKeyword.trim() ? renameCardKeyword.trim() : null;
-                updatedCat.searchYear = null;
-              } else if (renameCardSearchType === "year") {
-                updatedCat.searchYear = renameCardYear.trim() ? renameCardYear.trim() : null;
-                updatedCat.searchKeyword = null;
-              } else {
-                updatedCat.searchKeyword = null;
-                updatedCat.searchYear = null;
-              }
-              return updatedCat;
             }
             return c;
           })
@@ -534,7 +517,6 @@ export default function App() {
     setIsRenameCardModalOpen(false);
     setRenamingCategoryId(null);
     setRenameCardLabel("");
-    setRenameCardSearchType("none");
     setRenameCardKeyword("");
     setRenameCardYear("");
   };
