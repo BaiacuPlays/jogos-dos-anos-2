@@ -878,56 +878,62 @@ export default function App() {
                   </div>
 
                   {/* Card Description & Meta labels underneath */}
-                  <div className="flex items-center justify-between w-full self-stretch bg-zinc-900 border border-zinc-800/40 p-1 sm:p-1.5 rounded-lg gap-0.5">
-                    <span className={`flex-1 text-center font-display font-medium text-[10px] sm:text-xs leading-none uppercase tracking-tight py-0.5 px-1 truncate ${
-                      isSelected ? "text-indigo-400 font-bold" : entry ? "text-zinc-200" : "text-zinc-500"
-                    }`} title={category.label}>
+                  <div className="flex flex-col w-full self-stretch bg-zinc-900 border border-zinc-800/40 p-1.5 rounded-lg gap-1.5 transition-all">
+                    <span 
+                      className={`text-center font-display font-medium text-[10px] sm:text-xs uppercase tracking-wider block py-0.5 px-0.5 break-words line-clamp-2 min-h-[1.5rem] flex items-center justify-center leading-tight ${
+                        isSelected ? "text-indigo-400 font-bold" : entry ? "text-zinc-100" : "text-zinc-400"
+                      }`} 
+                      title={category.label}
+                    >
                       {category.label}
                     </span>
                     
-                    <div className="flex items-center shrink-0 non-exportable">
-                      {/* Rename card configuration */}
-                      {!isExporting && (
+                    {/* Actions Panel - Only visible when not exporting */}
+                    {!isExporting && (
+                      <div className="flex items-center justify-center gap-1 bg-zinc-950/40 border border-zinc-800/80 rounded p-0.5 non-exportable">
+                        {/* Rename card configuration */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleOpenRenameCardModal(category);
                           }}
-                          className="p-1 text-zinc-500 hover:text-amber-405 hover:text-amber-400 rounded hover:bg-zinc-800/60 transition-colors flex items-center justify-center cursor-pointer"
+                          className={`p-1.5 rounded hover:bg-zinc-800/80 transition-colors flex items-center justify-center cursor-pointer ${
+                            isSelected ? "text-indigo-300 hover:text-white" : "text-zinc-400 hover:text-amber-400"
+                          }`}
                           title="Editar / Renomear Card"
                         >
                           <Pencil className="w-3.5 h-3.5" />
                         </button>
-                      )}
 
-                      {/* Copy card configuration */}
-                      {!isExporting && (
+                        {/* Copy card configuration */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleCopyCard(category);
                           }}
-                          className="p-1 text-zinc-500 hover:text-indigo-400 rounded hover:bg-zinc-800/60 transition-colors flex items-center justify-center cursor-pointer"
+                          className={`p-1.5 rounded hover:bg-zinc-800/80 transition-colors flex items-center justify-center cursor-pointer ${
+                            isSelected ? "text-indigo-300 hover:text-white" : "text-zinc-400 hover:text-indigo-400"
+                          }`}
                           title="Copiar Card"
                         >
                           <Copy className="w-3.5 h-3.5" />
                         </button>
-                      )}
-                      
-                      {/* Delete dynamic card completely option */}
-                      {!isExporting && (
+                        
+                        {/* Delete dynamic card completely option */}
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
                             handleDeleteCategory(category.id);
                           }}
-                          className="p-1 text-zinc-500 hover:text-rose-400 rounded hover:bg-zinc-800/60 transition-colors flex items-center justify-center cursor-pointer"
+                          className={`p-1.5 rounded hover:bg-zinc-800/80 transition-colors flex items-center justify-center cursor-pointer ${
+                            isSelected ? "text-indigo-300 hover:text-white" : "text-zinc-400 hover:text-rose-400"
+                          }`}
                           title="Excluir Card"
                         >
                           <Trash className="w-3.5 h-3.5" />
                         </button>
-                      )}
-                    </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
