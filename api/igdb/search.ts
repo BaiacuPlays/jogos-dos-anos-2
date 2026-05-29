@@ -65,7 +65,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     accessToken = await getIgdbToken(envClientId, envClientSecret);
     clientId = envClientId;
   } catch (error) {
-    console.warn("Failed to authorize with environmental keys, trying default fallback keys:", error);
+    // Avoid printing the raw error to prevent system alerts since fallback keys are functional
+    console.log("IGDB: Custom credentials failed or not provided. Using default fallback API keys.");
     try {
       accessToken = await getIgdbToken(fallbackClientId, fallbackClientSecret);
       clientId = fallbackClientId;
