@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { IGDBGameResult, GameEntry, POKEMON_CATEGORIES, ListCategory, CustomList } from "./types";
 import { toPng } from "html-to-image";
-import { Download, Plus, Trash2, RotateCcw, X, FolderPlus, Trash, Share2, Copy } from "lucide-react";
+import { Download, Plus, Trash2, RotateCcw, X, FolderPlus, Trash, Share2, Copy, Pencil } from "lucide-react";
 
 const START_YEAR = 1991;
 const END_YEAR = 2026;
@@ -38,6 +38,12 @@ export default function App() {
   const [activeListId, setActiveListId] = useState<string>("goty");
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [allListsData, setAllListsData] = useState<Record<string, Record<string, GameEntry>>>({});
+  
+  // State for copying & pasting cards (categories)
+  const [copiedCard, setCopiedCard] = useState<{
+    category: Omit<ListCategory, "id">;
+    game?: GameEntry;
+  } | null>(null);
 
   // Custom Confirmation Dialog State
   const [confirmModal, setConfirmModal] = useState<{
@@ -100,6 +106,14 @@ export default function App() {
   const [newCardSearchType, setNewCardSearchType] = useState<"none" | "keyword" | "year">("none");
   const [newCardKeyword, setNewCardKeyword] = useState("");
   const [newCardYear, setNewCardYear] = useState("");
+
+  // Custom Card/Card Rename Modal State
+  const [isRenameCardModalOpen, setIsRenameCardModalOpen] = useState(false);
+  const [renamingCategoryId, setRenamingCategoryId] = useState<string | null>(null);
+  const [renameCardLabel, setRenameCardLabel] = useState("");
+  const [renameCardSearchType, setRenameCardSearchType] = useState<"none" | "keyword" | "year">("none");
+  const [renameCardKeyword, setRenameCardKeyword] = useState("");
+  const [renameCardYear, setRenameCardYear] = useState("");
 
   // Custom List Create Modal State
   const [isCreateListModalOpen, setIsCreateListModalOpen] = useState(false);
@@ -355,6 +369,70 @@ export default function App() {
     );
   };
 
+  const handleCopyCard = (category: ListCategory) => {
+    const entry = allListsData[activeListId]?.[category.id];
+    setCopiedCard({
+      category: {
+        label: category.label,
+        searchKeyword: category.searchKeyword || null,
+        searchYear: category.searchYear || null,
+      },
+      game: entry ? { ...entry } : undefined
+    });
+    showToast(`Card "${category.label}" copiado!`, "success");
+  };
+
+  const handlePasteCard = () => {
+    if (!copiedCard) return;
+
+    const newCatId = "custom_cat_" + Date.now();
+    const newCat: ListCategory = {
+      id: newCatId,
+      ...copiedCard.category
+    };
+
+    const updatedLists = lists.map(l => {
+      if (l.id === activeListId) {
+        return {
+          ...l,
+          categories: [...l.categories, newCat]
+        };
+      }
+      return l;
+    });
+
+    setLists(updatedLists);
+    localStorage.setItem("my_custom_lists_configs", JSON.stringify(updatedLists));
+
+    if (copiedCard.game) {
+      const currentListId = activeListId;
+      const updatedListData = {
+        ...(allListsData[currentListId] || {}),
+        [newCatId]: {
+          ...copiedCard.game,
+          key: newCatId
+        }
+      };
+
+      const updatedAllData = {
+        ...allListsData,
+        [currentListId]: updatedListData,
+      };
+
+      setAllListsData(updatedAllData);
+
+      if (currentListId === "goty") {
+        localStorage.setItem("my_goty_data", JSON.stringify(updatedListData));
+      } else if (currentListId === "pokemon") {
+        localStorage.setItem("my_pokemon_data", JSON.stringify(updatedListData));
+      } else {
+        localStorage.setItem(`my_list_data_${currentListId}`, JSON.stringify(updatedListData));
+      }
+    }
+
+    showToast(`Card "${copiedCard.category.label}" duplicado/colado nesta lista!`, "success");
+  };
+
   const handleAddCardSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCardLabel.trim()) {
@@ -389,6 +467,76 @@ export default function App() {
     setNewCardKeyword("");
     setNewCardYear("");
     setIsAddCardModalOpen(false);
+  };
+
+  const handleOpenRenameCardModal = (category: ListCategory) => {
+    setRenamingCategoryId(category.id);
+    setRenameCardLabel(category.label);
+    if (category.searchKeyword) {
+      setRenameCardSearchType("keyword");
+      setRenameCardKeyword(String(category.searchKeyword));
+      setRenameCardYear("");
+    } else if (category.searchYear) {
+      setRenameCardSearchType("year");
+      setRenameCardYear(String(category.searchYear));
+      setRenameCardKeyword("");
+    } else {
+      setRenameCardSearchType("none");
+      setRenameCardKeyword("");
+      setRenameCardYear("");
+    }
+    setIsRenameCardModalOpen(true);
+  };
+
+  const handleRenameCardSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!renameCardLabel.trim()) {
+      showToast("Escreva um nome para o card.", "error");
+      return;
+    }
+
+    if (!renamingCategoryId) return;
+
+    const updatedLists = lists.map(l => {
+      if (l.id === activeListId) {
+        return {
+          ...l,
+          categories: l.categories.map(c => {
+            if (c.id === renamingCategoryId) {
+              const updatedCat: ListCategory = {
+                ...c,
+                label: renameCardLabel.trim()
+              };
+              if (renameCardSearchType === "keyword") {
+                updatedCat.searchKeyword = renameCardKeyword.trim() ? renameCardKeyword.trim() : null;
+                updatedCat.searchYear = null;
+              } else if (renameCardSearchType === "year") {
+                updatedCat.searchYear = renameCardYear.trim() ? renameCardYear.trim() : null;
+                updatedCat.searchKeyword = null;
+              } else {
+                updatedCat.searchKeyword = null;
+                updatedCat.searchYear = null;
+              }
+              return updatedCat;
+            }
+            return c;
+          })
+        };
+      }
+      return l;
+    });
+
+    setLists(updatedLists);
+    localStorage.setItem("my_custom_lists_configs", JSON.stringify(updatedLists));
+    showToast("Card atualizado com sucesso!", "success");
+
+    // Close and reset
+    setIsRenameCardModalOpen(false);
+    setRenamingCategoryId(null);
+    setRenameCardLabel("");
+    setRenameCardSearchType("none");
+    setRenameCardKeyword("");
+    setRenameCardYear("");
   };
 
   const handleCreateListSubmit = (e: React.FormEvent) => {
@@ -730,26 +878,56 @@ export default function App() {
                   </div>
 
                   {/* Card Description & Meta labels underneath */}
-                  <div className="flex items-center justify-between w-full self-stretch bg-zinc-900 border border-zinc-800/40 p-1 sm:p-1.5 rounded-lg">
+                  <div className="flex items-center justify-between w-full self-stretch bg-zinc-900 border border-zinc-800/40 p-1 sm:p-1.5 rounded-lg gap-0.5">
                     <span className={`flex-1 text-center font-display font-medium text-[10px] sm:text-xs leading-none uppercase tracking-tight py-0.5 px-1 truncate ${
                       isSelected ? "text-indigo-400 font-bold" : entry ? "text-zinc-200" : "text-zinc-500"
                     }`} title={category.label}>
                       {category.label}
                     </span>
                     
-                    {/* Delete dynamic card completely option */}
-                    {!isExporting && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleDeleteCategory(category.id);
-                        }}
-                        className="p-1 text-zinc-600 hover:text-rose-400 rounded hover:bg-zinc-800/60 transition-colors non-exportable flex items-center justify-center cursor-pointer"
-                        title="Delete Card"
-                      >
-                        <Trash className="w-3.5 h-3.5" />
-                      </button>
-                    )}
+                    <div className="flex items-center shrink-0 non-exportable">
+                      {/* Rename card configuration */}
+                      {!isExporting && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleOpenRenameCardModal(category);
+                          }}
+                          className="p-1 text-zinc-500 hover:text-amber-405 hover:text-amber-400 rounded hover:bg-zinc-800/60 transition-colors flex items-center justify-center cursor-pointer"
+                          title="Editar / Renomear Card"
+                        >
+                          <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+
+                      {/* Copy card configuration */}
+                      {!isExporting && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleCopyCard(category);
+                          }}
+                          className="p-1 text-zinc-500 hover:text-indigo-400 rounded hover:bg-zinc-800/60 transition-colors flex items-center justify-center cursor-pointer"
+                          title="Copiar Card"
+                        >
+                          <Copy className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                      
+                      {/* Delete dynamic card completely option */}
+                      {!isExporting && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleDeleteCategory(category.id);
+                          }}
+                          className="p-1 text-zinc-500 hover:text-rose-400 rounded hover:bg-zinc-800/60 transition-colors flex items-center justify-center cursor-pointer"
+                          title="Excluir Card"
+                        >
+                          <Trash className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
               );
@@ -760,12 +938,32 @@ export default function App() {
               <div className="flex flex-col space-y-3">
                 <button
                   onClick={() => setIsAddCardModalOpen(true)}
-                  className="aspect-[3/4] flex flex-col justify-center items-center cursor-pointer group transition-all duration-300 rounded-xl border border-dashed border-zinc-800 hover:border-indigo-500/50 hover:bg-zinc-900/40 p-4 text-center space-y-2 non-exportable"
+                  className="aspect-[3/4] flex flex-col justify-center items-center cursor-pointer group transition-all duration-300 rounded-xl border border-dashed border-zinc-800 hover:border-indigo-500/50 hover:bg-zinc-900/40 p-4 text-center space-y-2 non-exportable focus:outline-none"
                   title="Clique para adicionar um card de categoria personalizado"
                 >
                   <Plus className="w-7 h-7 text-zinc-600 group-hover:text-indigo-400 group-hover:scale-110 transition-all pointer-events-none" />
                   <span className="text-[10px] sm:text-[11px] font-semibold text-zinc-500 group-hover:text-indigo-400 transition-colors">
                     Adicionar Card
+                  </span>
+                </button>
+                <div className="h-6 opacity-0" /> {/* aligned spacer */}
+              </div>
+            )}
+
+            {/* Dash placeholder to Paste Copied Card inline */}
+            {!isExporting && copiedCard && (
+              <div className="flex flex-col space-y-3 animate-in fade-in zoom-in-95 duration-250">
+                <button
+                  onClick={handlePasteCard}
+                  className="aspect-[3/4] flex flex-col justify-center items-center cursor-pointer group transition-all duration-300 rounded-xl border border-dashed border-emerald-800 bg-emerald-950/5 hover:border-emerald-500/50 hover:bg-emerald-950/15 p-4 text-center space-y-1 non-exportable focus:outline-none"
+                  title={`Clique para colar/duplicar o card "${copiedCard.category.label}"`}
+                >
+                  <Copy className="w-7 h-7 text-emerald-600 group-hover:text-emerald-400 group-hover:scale-110 transition-all pointer-events-none" />
+                  <span className="text-[10px] sm:text-[11px] font-bold text-emerald-500 group-hover:text-emerald-400 transition-colors">
+                    Colar Card
+                  </span>
+                  <span className="text-[9px] text-zinc-500 line-clamp-1 max-w-full px-1">
+                    ({copiedCard.category.label})
                   </span>
                 </button>
                 <div className="h-6 opacity-0" /> {/* aligned spacer */}
@@ -887,6 +1085,108 @@ export default function App() {
                   className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition shadow shadow-indigo-600/30"
                 >
                   Adicionar Card
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: RENAME / EDIT CARD */}
+      {isRenameCardModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-zinc-950/80 backdrop-blur-sm">
+          <div className="bg-zinc-900 border border-zinc-800 rounded-xl max-w-sm w-full p-6 text-zinc-100 shadow-2xl relative space-y-4">
+            <button 
+              onClick={() => {
+                setIsRenameCardModalOpen(false);
+                setRenamingCategoryId(null);
+              }}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white p-1 hover:bg-zinc-800 rounded transition"
+            >
+              <X className="w-4 h-4" />
+            </button>
+            <div>
+              <h3 className="text-lg font-bold font-display tracking-tight text-white flex items-center gap-1.5">
+                <span>✏️</span> Editar Card de Categoria
+              </h3>
+              <p className="text-xs text-zinc-400 mt-1">
+                Altere o nome e modifique filtros de busca rápidos para este card de categoria.
+              </p>
+            </div>
+
+            <form onSubmit={handleRenameCardSubmit} className="space-y-4 pt-1">
+              {/* Field Label */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-zinc-300 block uppercase tracking-wider">
+                  Nome do Card / Categoria
+                </label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ex: Melhor RPG, 2029..."
+                  value={renameCardLabel}
+                  onChange={(e) => setRenameCardLabel(e.target.value)}
+                  className="w-full bg-zinc-950 border border-zinc-800 text-zinc-100 rounded-lg py-2.5 px-3.5 focus:outline-none focus:ring-2 focus:ring-indigo-500/50 focus:border-indigo-500 text-sm placeholder-zinc-650 transition"
+                />
+              </div>
+
+              {/* Optional Search Rules */}
+              <div className="space-y-4 p-4 bg-zinc-950/60 border border-zinc-800 rounded-xl">
+                <div className="space-y-1">
+                  <h4 className="text-xs font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-1.5">
+                    <span>⚙️</span> Filtros de Busca (Opcionais)
+                  </h4>
+                  <p className="text-[11px] text-zinc-500 leading-normal">
+                    Filtros de pesquisa rápidos para orientar buscas neste card.
+                  </p>
+                </div>
+
+                {/* Keyword Field */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-zinc-400 block uppercase tracking-wider">
+                    Franquias / Palavras-chave
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: final fantasy, gta (separe por vírgula)"
+                    value={renameCardKeyword}
+                    onChange={(e) => setRenameCardKeyword(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-lg py-2 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  />
+                </div>
+
+                {/* Year Field */}
+                <div className="space-y-1.5">
+                  <label className="text-[11px] font-semibold text-zinc-400 block uppercase tracking-wider">
+                    Ano(s) de Lançamento
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ex: 1997, 2026"
+                    value={renameCardYear}
+                    onChange={(e) => setRenameCardYear(e.target.value)}
+                    className="w-full bg-zinc-900 border border-zinc-800 text-zinc-100 rounded-lg py-2 px-3 text-xs focus:ring-1 focus:ring-indigo-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsRenameCardModalOpen(false);
+                    setRenamingCategoryId(null);
+                  }}
+                  className="px-4 py-2 text-xs font-semibold hover:bg-zinc-800 rounded-lg text-zinc-400 hover:text-white transition"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg transition shadow shadow-indigo-600/30"
+                >
+                  Salvar Alterações
                 </button>
               </div>
             </form>
