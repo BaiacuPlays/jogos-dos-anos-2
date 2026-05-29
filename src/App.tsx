@@ -139,7 +139,28 @@ export default function App() {
     let activeLists = DEFAULT_LISTS;
     if (savedConfigs) {
       try {
-        activeLists = JSON.parse(savedConfigs);
+        let loaded = JSON.parse(savedConfigs);
+        let updated = false;
+        loaded = loaded.map((list: any) => {
+          if (list.id === "pokemon") {
+            const hasWorst = list.categories.some((c: any) => c.id === "worst_game");
+            if (!hasWorst) {
+              updated = true;
+              return {
+                ...list,
+                categories: [
+                  ...list.categories,
+                  { id: "worst_game", label: "Pior Jogo", searchKeyword: "pokemon" }
+                ]
+              };
+            }
+          }
+          return list;
+        });
+        activeLists = loaded;
+        if (updated) {
+          localStorage.setItem("my_custom_lists_configs", JSON.stringify(activeLists));
+        }
       } catch (e) {
         console.error("Failed to parse dynamic list configs", e);
       }

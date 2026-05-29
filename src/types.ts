@@ -55,5 +55,6 @@ export const POKEMON_CATEGORIES: PokemonCategory[] = [
   { id: "fav_rival", label: "Rival Favorito" },
   { id: "fav_champion", label: "Campeão Favorito" },
   { id: "fav_starters", label: "Iniciais Favoritos" },
-  { id: "fav_legendaries", label: "Lendários Favoritos" }
+  { id: "fav_legendaries", label: "Lendários Favoritos" },
+  { id: "worst_game", label: "Pior Jogo" }
 ];
