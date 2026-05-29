@@ -75,20 +75,44 @@ async function startServer() {
     }
 
     try {
-      const { query, year } = req.body;
+      const { query, year, isPokemonMode, searchKeyword } = req.body;
       let conditions = ["cover != null"];
       
-      // Removed category filtering because it seemed to filter out some main games like Laika
+      if (isPokemonMode) {
+        conditions.push("(name ~ *\"pokemon\"* | name ~ *\"pokémon\"*)");
+      } else if (searchKeyword) {
+        const keywords = String(searchKeyword).split(",").map((k: string) => k.trim()).filter(Boolean);
+        if (keywords.length > 0) {
+          const subConds = keywords.map((kw: string) => {
+            const clean = kw.replace(/"/g, '');
+            if (clean.toLowerCase() === "pokemon" || clean.toLowerCase() === "pokémon") {
+              return "(name ~ *\"pokemon\"* | name ~ *\"pokémon\"*)";
+            } else {
+              return `name ~ *"${clean}"*`;
+            }
+          });
+          conditions.push(`(${subConds.join(" | ")})`);
+        }
+      }
       
       if (query) {
         conditions.push(`name ~ *"${query.replace(/"/g, '')}"*`);
       }
       
       if (year) {
-        const start = Math.floor(new Date(year, 0, 1).getTime() / 1000);
-        const end = Math.floor(new Date(year, 11, 31, 23, 59, 59).getTime() / 1000);
-        conditions.push(`first_release_date >= ${start}`);
-        conditions.push(`first_release_date <= ${end}`);
+        const yearsList = String(year)
+          .split(",")
+          .map(y => parseInt(y.trim()))
+          .filter(y => !isNaN(y) && y >= 1900 && y <= 2100);
+
+        if (yearsList.length > 0) {
+          const yearConditions = yearsList.map(y => {
+            const start = Math.floor(new Date(y, 0, 1).getTime() / 1000);
+            const end = Math.floor(new Date(y, 11, 31, 23, 59, 59).getTime() / 1000);
+            return `(first_release_date >= ${start} & first_release_date <= ${end})`;
+          });
+          conditions.push(`(${yearConditions.join("|")})`);
+        }
       }
 
       const igdbBody = `fields name, cover.image_id, first_release_date, category; where ${conditions.join(" & ")}; sort total_rating_count desc; limit 40;`;
